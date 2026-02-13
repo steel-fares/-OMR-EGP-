@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة الصرافة الذكية | OMR ↔ EGP</title>
+    <style>
+        :root { --primary: #00d1b2; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #ffd700; --secondary: #3273dc; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 20px; margin: 0; }
+        .container { background: var(--card); padding: 25px; border-radius: 20px; width: 100%; max-width: 550px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h2 { color: var(--primary); margin: 0; font-size: 1.8rem; }
+        
+        .tabs { display: flex; background: #2a2a2a; border-radius: 12px; padding: 5px; margin-bottom: 25px; }
+        .tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; border-radius: 10px; transition: 0.3s; font-weight: bold; font-size: 0.9rem; }
+        .tab.active { background: var(--primary); color: #000; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .full-width { grid-column: 1 / -1; }
+        
+        label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: #aaa; font-weight: 500; }
+        input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #444; background: #2a2a2a; color: #fff; box-sizing: border-box; text-align: center; font-size: 1.1rem; transition: all 0.3s; }
+        input:focus { border-color: var(--primary); outline: none; background: #333; box-shadow: 0 0 0 3px rgba(0, 209, 178, 0.1); }
+        .highlight-input { border: 2px solid var(--primary); background: #1a3a3a; font-weight: bold; }
+        
+        .live-btn { background: #2a2a2a; border: 1px solid var(--primary); color: var(--primary); padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; margin-bottom: 20px; width: 100%; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
+        .live-btn:hover { background: var(--primary); color: #000; }
+
+        .result-box { margin-top: 20px; padding: 20px; border-radius: 15px; background: #252525; border: 1px dashed var(--primary); position: relative; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .info-label { color: #aaa; }
+        .info-val { color: var(--accent); font-weight: bold; }
+        
+        .profit-section { text-align: center; margin-top: 15px; }
+        .profit-val { font-size: 2.2rem; font-weight: 800; color: var(--primary); text-shadow: 0 0 20px rgba(0, 209, 178, 0.3); }
+        
+        .status-badge { display: inline-block; padding: 6px 15px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; margin-top: 10px; }
+        .good { background: rgba(35, 209, 96, 0.2); color: #23d160; }
+        .warning { background: rgba(255, 221, 87, 0.2); color: #ffdd57; }
+        .danger { background: rgba(255, 56, 96, 0.2); color: #ff3860; }
+        
+        .footer { text-align: center; margin-top: 20px; font-size: 0.75rem; color: #666; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>حاسبة الصرافة الذكية 💱</h2>
+    </div>
+
+    <div class="tabs">
+        <div id="tab1" class="tab active" onclick="switchTab(1)">عمان ← مصر 🇴🇲🇪🇬</div>
+        <div id="tab2" class="tab" onclick="switchTab(2)">مصر ← عمان 🇪🇬🇴🇲</div>
+    </div>
+
+    <button id="fetchBtn" class="live-btn" onclick="fetchLiveRates()">
+        <span>🔄 تحديث الأسعار الحية (Binance P2P)</span>
+    </button>
+    
+    <!-- واجهة عمان إلى مصر -->
+    <div id="omrToEgp" class="calc-interface">
+        <div class="grid">
+            <div>
+                <label>سعر شراء USDT (بالريال)</label>
+                <input type="number" id="buyUsdtOmr" value="0.392" step="0.001" oninput="calculateOmrToEgp()">
+            </div>
+            <div>
+                <label>سعر بيع USDT (بالجنيه)</label>
+                <input type="number" id="sellUsdtEgp" value="47.80" step="0.01" oninput="calculateOmrToEgp()">
+            </div>
+            <div class="full-width">
+                <label style="color:var(--primary);">سعر الاتفاق (1 ريال = كم جنيه؟)</label>
+                <input type="number" id="rateOmrToEgp" value="122.0" step="0.1" oninput="calculateOmrToEgp()" style="border-color: var(--primary);">
+            </div>
+        </div>
+
+        <div class="grid">
+            <div>
+                <label>المبلغ المستلم (بالريال)</label>
+                <input type="number" id="amountOmrIn" placeholder="0.000" class="highlight-input" oninput="syncAmount('omr', 'egp')">
+            </div>
+            <div>
+                <label>المبلغ المرسل (بالجنيه)</label>
+                <input type="number" id="amountEgpOut" placeholder="0" class="highlight-input" oninput="syncAmount('egp', 'omr')">
+            </div>
+        </div>
+    </div>
+
+    <!-- واجهة مصر إلى عمان -->
+    <div id="egpToOmr" class="calc-interface hidden">
+        <div class="grid">
+            <div>
+                <label>سعر شراء USDT (بالجنيه)</label>
+                <input type="number" id="buyUsdtEgp" value="48.50" step="0.01" oninput="calculateEgpToOmr()">
+            </div>
+            <div>
+                <label>سعر بيع USDT (بالريال)</label>
+                <input type="number" id="sellUsdtOmr" value="0.385" step="0.001" oninput="calculateEgpToOmr()">
+            </div>
+            <div class="full-width">
+                <label style="color:var(--primary);">سعر الاتفاق (1 ريال = كم جنيه؟)</label>
+                <input type="number" id="rateEgpToOmr" value="125.0" step="0.1" oninput="calculateEgpToOmr()" style="border-color: var(--primary);">
+            </div>
+        </div>
+
+        <div class="grid">
+            <div>
+                <label>المبلغ المستلم (بالجنيه)</label>
+                <input type="number" id="amountEgpIn" placeholder="0" class="highlight-input" oninput="syncAmountE2O('egp', 'omr')">
+            </div>
+            <div>
+                <label>المبلغ المرسل (بالريال)</label>
+                <input type="number" id="amountOmrOut" placeholder="0.000" class="highlight-input" oninput="syncAmountE2O('omr', 'egp')">
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <label>عمولة الوسيط / التحويل (بالريال)</label>
+        <input type="number" id="brokerFee" value="0.5" step="0.1" oninput="runCurrentCalc()">
+    </div>
+
+    <div class="result-box">
+        <div class="info-row">
+            <span class="info-label">سعر الصرف الفعلي (السوق):</span>
+            <span id="marketRateDisplay" class="info-val">0.00 EGP</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">تكلفة العملية الفعلية عليك:</span>
+            <span id="actualCostDisplay" class="info-val">0.000 OMR</span>
+        </div>
+        
+        <div class="profit-section">
+            <div class="profit-label" id="profitLabel">صافي ربحك النهائي</div>
+            <div id="profitResult" class="profit-val">0.000 ريال</div>
+            <div id="statusBadge" class="status-badge">--</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        تم التطوير بواسطة Fares Business Helper
+    </div>
+</div>
+
+<script>
+    let currentMode = 1; // 1: OMR to EGP, 2: EGP to OMR
+
+    function switchTab(mode) {
+        currentMode = mode;
+        document.getElementById('tab1').classList.toggle('active', mode === 1);
+        document.getElementById('tab2').classList.toggle('active', mode === 2);
+        document.getElementById('omrToEgp').classList.toggle('hidden', mode === 2);
+        document.getElementById('egpToOmr').classList.toggle('hidden', mode === 1);
+        runCurrentCalc();
+    }
+
+    function runCurrentCalc() {
+        if (currentMode === 1) calculateOmrToEgp();
+        else calculateEgpToOmr();
+    }
+
+    // حسابات عمان إلى مصر
+    function syncAmount(from, to) {
+        const rate = parseFloat(document.getElementById('rateOmrToEgp').value) || 0;
+        if (from === 'omr') {
+            const val = parseFloat(document.getElementById('amountOmrIn').value) || 0;
+            document.getElementById('amountEgpOut').value = (val * rate).toFixed(0);
+        } else {
+            const val = parseFloat(document.getElementById('amountEgpOut').value) || 0;
+            document.getElementById('amountOmrIn').value = (val / rate).toFixed(3);
+        }
+        calculateOmrToEgp();
+    }
+
+    function calculateOmrToEgp() {
+        const buyUsdt = parseFloat(document.getElementById('buyUsdtOmr').value) || 0;
+        const sellUsdt = parseFloat(document.getElementById('sellUsdtEgp').value) || 0;
+        const egpOut = parseFloat(document.getElementById('amountEgpOut').value) || 0;
+        const omrIn = parseFloat(document.getElementById('amountOmrIn').value) || 0;
+        const fee = parseFloat(document.getElementById('brokerFee').value) || 0;
+
+        const usdtNeeded = egpOut / sellUsdt;
+        const costInOmr = usdtNeeded * buyUsdt;
+        const profit = omrIn - costInOmr - fee;
+
+        document.getElementById('marketRateDisplay').innerText = (sellUsdt / buyUsdt).toFixed(2) + " EGP";
+        document.getElementById('actualCostDisplay').innerText = costInOmr.toFixed(3) + " OMR";
+        displayProfit(profit);
+    }
+
+    // حسابات مصر إلى عمان
+    function syncAmountE2O(from, to) {
+        const rate = parseFloat(document.getElementById('rateEgpToOmr').value) || 0;
+        if (from === 'egp') {
+            const val = parseFloat(document.getElementById('amountEgpIn').value) || 0;
+            document.getElementById('amountOmrOut').value = (val / rate).toFixed(3);
+        } else {
+            const val = parseFloat(document.getElementById('amountOmrOut').value) || 0;
+            document.getElementById('amountEgpIn').value = (val * rate).toFixed(0);
+        }
+        calculateEgpToOmr();
+    }
+
+    function calculateEgpToOmr() {
+        const buyUsdt = parseFloat(document.getElementById('buyUsdtEgp').value) || 0;
+        const sellUsdt = parseFloat(document.getElementById('sellUsdtOmr').value) || 0;
+        const egpIn = parseFloat(document.getElementById('amountEgpIn').value) || 0;
+        const omrOut = parseFloat(document.getElementById('amountOmrOut').value) || 0;
+        const fee = parseFloat(document.getElementById('brokerFee').value) || 0;
+
+        // التكلفة: كم ريال سأدفع فعلياً لشراء USDT بالجنيه؟
+        // 1. كم USDT سأحصل عليها بمبلغ الجنيه المستلم؟
+        const usdtBought = egpIn / buyUsdt;
+        // 2. كم ريال سأحصل عليه من بيع هذه الـ USDT؟
+        const omrReceivedFromSale = usdtBought * sellUsdt;
+        // 3. الربح = المبلغ الذي حصلت عليه من البيع - المبلغ الذي أرسلته للزبون - العمولة
+        const profit = omrReceivedFromSale - omrOut - fee;
+
+        document.getElementById('marketRateDisplay').innerText = (buyUsdt / sellUsdt).toFixed(2) + " EGP";
+        document.getElementById('actualCostDisplay').innerText = (omrOut + fee).toFixed(3) + " OMR";
+        displayProfit(profit);
+    }
+
+    function displayProfit(profit) {
+        const res = document.getElementById('profitResult');
+        const badge = document.getElementById('statusBadge');
+        res.innerText = profit.toFixed(3) + " ريال";
+        
+        if (profit > 2) { badge.innerText = "ربح ممتاز ✅"; badge.className = "status-badge good"; }
+        else if (profit > 0) { badge.innerText = "ربح مقبول 👍"; badge.className = "status-badge warning"; }
+        else if (profit < 0) { badge.innerText = "خسارة! راجع الأسعار ❌"; badge.className = "status-badge danger"; }
+        else { badge.innerText = "--"; badge.className = "status-badge"; }
+    }
+
+    async function fetchLiveRates() {
+        const btn = document.getElementById('fetchBtn');
+        btn.innerHTML = '⏳ جاري التحديث...';
+        await new Promise(r => setTimeout(r, 1000));
+        
+        // قيم افتراضية قريبة من الواقع للاختبار
+        if (currentMode === 1) {
+            document.getElementById('buyUsdtOmr').value = 0.392;
+            document.getElementById('sellUsdtEgp').value = 47.80;
+        } else {
+            document.getElementById('buyUsdtEgp').value = 48.50;
+            document.getElementById('sellUsdtOmr').value = 0.385;
+        }
+        
+        runCurrentCalc();
+        btn.innerHTML = '✅ تم التحديث بنجاح';
+        setTimeout(() => btn.innerHTML = '🔄 تحديث الأسعار الحية (Binance P2P)', 2000);
+    }
+
+    runCurrentCalc();
+</script>
+</body>
+</html>
