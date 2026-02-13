@@ -8,38 +8,29 @@
         :root { --primary: #00d1b2; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --accent: #ffd700; --secondary: #3273dc; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 20px; margin: 0; }
         .container { background: var(--card); padding: 25px; border-radius: 20px; width: 100%; max-width: 550px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
         .header { text-align: center; margin-bottom: 20px; }
         .header h2 { color: var(--primary); margin: 0; font-size: 1.8rem; }
-        
         .tabs { display: flex; background: #2a2a2a; border-radius: 12px; padding: 5px; margin-bottom: 25px; }
         .tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; border-radius: 10px; transition: 0.3s; font-weight: bold; font-size: 0.9rem; }
         .tab.active { background: var(--primary); color: #000; }
-        
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .full-width { grid-column: 1 / -1; }
-        
         label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: #aaa; font-weight: 500; }
         input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #444; background: #2a2a2a; color: #fff; box-sizing: border-box; text-align: center; font-size: 1.1rem; transition: all 0.3s; }
         input:focus { border-color: var(--primary); outline: none; background: #333; box-shadow: 0 0 0 3px rgba(0, 209, 178, 0.1); }
         .highlight-input { border: 2px solid var(--primary); background: #1a3a3a; font-weight: bold; }
-        
         .live-btn { background: #2a2a2a; border: 1px solid var(--primary); color: var(--primary); padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; margin-bottom: 20px; width: 100%; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
         .live-btn:hover { background: var(--primary); color: #000; }
-
         .result-box { margin-top: 20px; padding: 20px; border-radius: 15px; background: #252525; border: 1px dashed var(--primary); position: relative; }
         .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; border-bottom: 1px solid #333; padding-bottom: 8px; }
         .info-label { color: #aaa; }
         .info-val { color: var(--accent); font-weight: bold; }
-        
         .profit-section { text-align: center; margin-top: 15px; }
         .profit-val { font-size: 2.2rem; font-weight: 800; color: var(--primary); text-shadow: 0 0 20px rgba(0, 209, 178, 0.3); }
-        
         .status-badge { display: inline-block; padding: 6px 15px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; margin-top: 10px; }
         .good { background: rgba(35, 209, 96, 0.2); color: #23d160; }
         .warning { background: rgba(255, 221, 87, 0.2); color: #ffdd57; }
         .danger { background: rgba(255, 56, 96, 0.2); color: #ff3860; }
-        
         .footer { text-align: center; margin-top: 20px; font-size: 0.75rem; color: #666; }
         .hidden { display: none; }
     </style>
@@ -73,10 +64,9 @@
             </div>
             <div class="full-width">
                 <label style="color:var(--primary);">سعر الاتفاق (1 ريال = كم جنيه؟)</label>
-                <input type="number" id="rateOmrToEgp" value="122.0" step="0.1" oninput="calculateOmrToEgp()" style="border-color: var(--primary);">
+                <input type="number" id="rateOmrToEgp" value="122.0" step="0.1" oninput="syncAmount('omr', 'egp')" style="border-color: var(--primary);">
             </div>
         </div>
-
         <div class="grid">
             <div>
                 <label>المبلغ المستلم (بالريال)</label>
@@ -102,10 +92,9 @@
             </div>
             <div class="full-width">
                 <label style="color:var(--primary);">سعر الاتفاق (1 ريال = كم جنيه؟)</label>
-                <input type="number" id="rateEgpToOmr" value="125.0" step="0.1" oninput="calculateEgpToOmr()" style="border-color: var(--primary);">
+                <input type="number" id="rateEgpToOmr" value="125.0" step="0.1" oninput="syncAmountE2O('egp', 'omr')" style="border-color: var(--primary);">
             </div>
         </div>
-
         <div class="grid">
             <div>
                 <label>المبلغ المستلم (بالجنيه)</label>
@@ -132,21 +121,17 @@
             <span class="info-label">تكلفة العملية الفعلية عليك:</span>
             <span id="actualCostDisplay" class="info-val">0.000 OMR</span>
         </div>
-        
         <div class="profit-section">
-            <div class="profit-label" id="profitLabel">صافي ربحك النهائي</div>
+            <div class="profit-label">صافي ربحك النهائي</div>
             <div id="profitResult" class="profit-val">0.000 ريال</div>
             <div id="statusBadge" class="status-badge">--</div>
         </div>
     </div>
-
-    <div class="footer">
-        تم التطوير بواسطة Fares Business Helper
-    </div>
+    <div class="footer">تم التطوير بواسطة Fares Business Helper</div>
 </div>
 
 <script>
-    let currentMode = 1; // 1: OMR to EGP, 2: EGP to OMR
+    let currentMode = 1; 
 
     function switchTab(mode) {
         currentMode = mode;
@@ -162,15 +147,17 @@
         else calculateEgpToOmr();
     }
 
-    // حسابات عمان إلى مصر
     function syncAmount(from, to) {
         const rate = parseFloat(document.getElementById('rateOmrToEgp').value) || 0;
+        const omrInEl = document.getElementById('amountOmrIn');
+        const egpOutEl = document.getElementById('amountEgpOut');
+        
         if (from === 'omr') {
-            const val = parseFloat(document.getElementById('amountOmrIn').value) || 0;
-            document.getElementById('amountEgpOut').value = (val * rate).toFixed(0);
-        } else {
-            const val = parseFloat(document.getElementById('amountEgpOut').value) || 0;
-            document.getElementById('amountOmrIn').value = (val / rate).toFixed(3);
+            const val = parseFloat(omrInEl.value) || 0;
+            egpOutEl.value = (val * rate).toFixed(0);
+        } else if (from === 'egp') {
+            const val = parseFloat(egpOutEl.value) || 0;
+            omrInEl.value = (val / rate).toFixed(3);
         }
         calculateOmrToEgp();
     }
@@ -186,20 +173,22 @@
         const costInOmr = usdtNeeded * buyUsdt;
         const profit = omrIn - costInOmr - fee;
 
-        document.getElementById('marketRateDisplay').innerText = (sellUsdt / buyUsdt).toFixed(2) + " EGP";
+        document.getElementById('marketRateDisplay').innerText = (buyUsdt > 0 ? (sellUsdt / buyUsdt).toFixed(2) : "0.00") + " EGP";
         document.getElementById('actualCostDisplay').innerText = costInOmr.toFixed(3) + " OMR";
         displayProfit(profit);
     }
 
-    // حسابات مصر إلى عمان
     function syncAmountE2O(from, to) {
         const rate = parseFloat(document.getElementById('rateEgpToOmr').value) || 0;
+        const egpInEl = document.getElementById('amountEgpIn');
+        const omrOutEl = document.getElementById('amountOmrOut');
+
         if (from === 'egp') {
-            const val = parseFloat(document.getElementById('amountEgpIn').value) || 0;
-            document.getElementById('amountOmrOut').value = (val / rate).toFixed(3);
-        } else {
-            const val = parseFloat(document.getElementById('amountOmrOut').value) || 0;
-            document.getElementById('amountEgpIn').value = (val * rate).toFixed(0);
+            const val = parseFloat(egpInEl.value) || 0;
+            omrOutEl.value = (rate > 0 ? (val / rate).toFixed(3) : "0.000");
+        } else if (from === 'omr') {
+            const val = parseFloat(omrOutEl.value) || 0;
+            egpInEl.value = (val * rate).toFixed(0);
         }
         calculateEgpToOmr();
     }
@@ -211,15 +200,11 @@
         const omrOut = parseFloat(document.getElementById('amountOmrOut').value) || 0;
         const fee = parseFloat(document.getElementById('brokerFee').value) || 0;
 
-        // التكلفة: كم ريال سأدفع فعلياً لشراء USDT بالجنيه؟
-        // 1. كم USDT سأحصل عليها بمبلغ الجنيه المستلم؟
-        const usdtBought = egpIn / buyUsdt;
-        // 2. كم ريال سأحصل عليه من بيع هذه الـ USDT؟
+        const usdtBought = buyUsdt > 0 ? (egpIn / buyUsdt) : 0;
         const omrReceivedFromSale = usdtBought * sellUsdt;
-        // 3. الربح = المبلغ الذي حصلت عليه من البيع - المبلغ الذي أرسلته للزبون - العمولة
         const profit = omrReceivedFromSale - omrOut - fee;
 
-        document.getElementById('marketRateDisplay').innerText = (buyUsdt / sellUsdt).toFixed(2) + " EGP";
+        document.getElementById('marketRateDisplay').innerText = (sellUsdt > 0 ? (buyUsdt / sellUsdt).toFixed(2) : "0.00") + " EGP";
         document.getElementById('actualCostDisplay').innerText = (omrOut + fee).toFixed(3) + " OMR";
         displayProfit(profit);
     }
@@ -239,8 +224,6 @@
         const btn = document.getElementById('fetchBtn');
         btn.innerHTML = '⏳ جاري التحديث...';
         await new Promise(r => setTimeout(r, 1000));
-        
-        // قيم افتراضية قريبة من الواقع للاختبار
         if (currentMode === 1) {
             document.getElementById('buyUsdtOmr').value = 0.392;
             document.getElementById('sellUsdtEgp').value = 47.80;
@@ -248,12 +231,10 @@
             document.getElementById('buyUsdtEgp').value = 48.50;
             document.getElementById('sellUsdtOmr').value = 0.385;
         }
-        
         runCurrentCalc();
         btn.innerHTML = '✅ تم التحديث بنجاح';
         setTimeout(() => btn.innerHTML = '🔄 تحديث الأسعار الحية (Binance P2P)', 2000);
     }
-
     runCurrentCalc();
 </script>
 </body>
