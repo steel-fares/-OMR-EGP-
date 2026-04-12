@@ -121,6 +121,10 @@
             <span class="info-label">تكلفة العملية الفعلية عليك:</span>
             <span id="actualCostDisplay" class="info-val">0.000 OMR</span>
         </div>
+        <div class="info-row">
+            <span class="info-label">كمية USDT المستخدمة:</span>
+            <span id="usdtUsedDisplay" class="info-val">0.00 USDT</span>
+        </div>
         <div class="profit-section">
             <div class="profit-label">صافي ربحك النهائي</div>
             <div id="profitResult" class="profit-val">0.000 ريال</div>
@@ -175,6 +179,7 @@
 
         document.getElementById('marketRateDisplay').innerText = (buyUsdt > 0 ? (sellUsdt / buyUsdt).toFixed(2) : "0.00") + " EGP";
         document.getElementById('actualCostDisplay').innerText = costInOmr.toFixed(3) + " OMR";
+        document.getElementById('usdtUsedDisplay').innerText = usdtNeeded.toFixed(2) + " USDT";
         displayProfit(profit);
     }
 
@@ -206,6 +211,7 @@
 
         document.getElementById('marketRateDisplay').innerText = (sellUsdt > 0 ? (buyUsdt / sellUsdt).toFixed(2) : "0.00") + " EGP";
         document.getElementById('actualCostDisplay').innerText = (omrOut + fee).toFixed(3) + " OMR";
+        document.getElementById('usdtUsedDisplay').innerText = usdtBought.toFixed(2) + " USDT";
         displayProfit(profit);
     }
 
